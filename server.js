@@ -15,7 +15,36 @@ async function auth(req,res,next){try{let h=req.headers.authorization||"";if(!h.
 function admin(req,res,next){if(req.user.role!=="admin")return res.status(403).json({error:"Administrateur requis"});next()}
 app.post("/api/register",async(req,res)=>{try{let{name,email,password,role="buyer"}=req.body;if(!name||!email||!password)return res.status(400).json({error:"Champs requis"});let hash=await bcrypt.hash(password,12);let r=await pool.query("INSERT INTO users(name,email,password_hash,role) VALUES($1,$2,$3,$4) RETURNING id,name,email,role",[name,email.toLowerCase(),hash,role==="seller"?"seller":"buyer"]);res.status(201).json({user:r.rows[0],token:sign(r.rows[0])})}catch(e){res.status(400).json({error:"Email déjà utilisé ou données invalides"})}});
 app.post("/api/login",async(req,res)=>{let r=await pool.query("SELECT * FROM users WHERE email=$1",[String(req.body.email||"").toLowerCase()]);let u=r.rows[0];if(!u||!(await bcrypt.compare(req.body.password||"",u.password_hash)))return res.status(401).json({error:"Identifiants incorrects"});res.json({token:sign(u),user:{id:u.id,name:u.name,email:u.email,role:u.role}})});
-app.get("/api/products",async(req,res)=>{let q=String(req.query.q||"").trim(),cat=String(req.query.category||"").trim(),min=Number(req.query.min||0),max=Number(req.query.max||99999999);let r=await pool.query("SELECT p.*,u.name seller FROM products p JOIN users u ON u.id=p.seller_id WHERE p.status='approved' AND p.title ILIKE $1 AND ($2='' OR p.category=$2) AND p.price_cents BETWEEN $3 AND $4 ORDER BY p.created_at DESC",[`%${q}%`,cat,min*100,max*100]);res.json(r.rows)});
+app.get("/api/products", async (req, res) => {
+  try {
+    let q = String(req.query.q || "").trim();
+    let cat = String(req.query.category || "").trim();
+    let min = Number(req.query.min || 0);
+    let max = Number(req.query.max || 99999999);
+
+    let r = await pool.query(
+      `SELECT p.*, u.name AS seller
+       FROM products p
+       JOIN users u ON u.id = p.seller_id
+       WHERE p.status = 'approved'
+       AND p.title ILIKE $1
+       AND ($2 = '' OR p.category = $2)
+       AND p.price_cents BETWEEN $3 AND $4
+       ORDER BY p.created_at DESC`,
+      [`%${q}%`, cat, min * 100, max * 100]
+    );
+
+    res.json(r.rows);
+
+  } catch (e) {
+    console.error("ERREUR PRODUITS :", e);
+
+    res.status(500).json({
+      error: "Erreur lors du chargement des produits",
+      details: e.message
+    });
+  }
+});
 app.post("/api/products",auth,async(req,res)=>{if(!["seller","admin"].includes(req.user.role))return res.status(403).json({error:"Compte vendeur requis"});let b=req.body,r=await pool.query("INSERT INTO products(seller_id,title,description,price_cents,category,condition,city,status) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *",[req.user.id,b.title,b.description||"",Math.round(Number(b.price)*100),b.category||"Autre",b.condition||"Bon état",b.city||"",req.user.role==="admin"?"approved":"pending"]);res.status(201).json(r.rows[0])});
 app.get("/api/cart",auth,async(req,res)=>{let r=await pool.query("SELECT c.product_id,c.quantity,p.title,p.price_cents,p.seller_id FROM carts c JOIN products p ON p.id=c.product_id WHERE c.buyer_id=$1",[req.user.id]);res.json(r.rows)});
 app.post("/api/cart",auth,async(req,res)=>{await pool.query("INSERT INTO carts(buyer_id,product_id,quantity) VALUES($1,$2,1) ON CONFLICT(buyer_id,product_id) DO UPDATE SET quantity=carts.quantity+1",[req.user.id,req.body.productId]);res.status(201).json({ok:true})});
