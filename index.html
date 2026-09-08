@@ -4,8 +4,37 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f7f5;color:#17231d}head
 <div class="modal" id="modal"><div class="box" id="box"></div></div>
 <script>
 let token=localStorage.token||"",app=document.querySelector("#app"),modal=document.querySelector("#modal"),box=document.querySelector("#box");
-async function api(p,o={}){o.headers={...(o.headers||{}),"Content-Type":"application/json"};if(token)o.headers.Authorization="Bearer "+token;let r=await fetch(p,o),d=await r.json();if(!r.ok)throw Error(d.error||"Erreur");return d}
-function open(x){box.innerHTML=x;modal.style.display="flex"}function close(){modal.style.display="none"}
+async function api(p,o={}){
+  o.headers={
+    ...(o.headers||{}),
+    "Content-Type":"application/json"
+  };
+
+  if(token){
+    o.headers.Authorization="Bearer "+token;
+  }
+
+  let r = await fetch(p,o);
+
+  let text = await r.text();
+  let d;
+
+  try{
+    d = JSON.parse(text);
+  }catch(e){
+    throw Error("Le serveur a renvoyé une réponse invalide : " + text.substring(0,200));
+  }
+
+  if(!r.ok){
+    throw Error(
+      d.details
+        ? d.error + " : " + d.details
+        : (d.error || "Erreur")
+    );
+  }
+
+  return d;
+      }
 function auth(){open(`<h2>Connexion</h2><input id="email" placeholder="Email"><input id="pass" type="password" placeholder="Mot de passe"><button class="btn primary" onclick="login()">Se connecter</button><hr><h3>Créer un compte vendeur</h3><input id="nm" placeholder="Nom"><input id="em" placeholder="Email"><input id="pw" type="password" placeholder="Mot de passe"><button class="btn secondary" onclick="register()">Créer le compte</button>`)}
 async function login(){try{let d=await api("/api/login",{method:"POST",body:JSON.stringify({email:email.value,password:pass.value})});token=d.token;localStorage.token=token;close();home()}catch(e){alert(e.message)}}
 async function register(){try{let d=await api("/api/register",{method:"POST",body:JSON.stringify({name:nm.value,email:em.value,password:pw.value,role:"seller"})});token=d.token;localStorage.token=token;close();seller()}catch(e){alert(e.message)}}async function home(){
