@@ -108,6 +108,36 @@ async function loginAccount(){
   `;
 
   modal.style.display = "flex";
+  }async function registerAccount(){
+  try{
+    const name = document.getElementById("nm").value.trim();
+    const email = document.getElementById("em").value.trim();
+    const password = document.getElementById("pw").value;
+
+    if(!name || !email || !password){
+      alert("Veuillez remplir tous les champs.");
+      return;
+    }
+
+    const r = await api("/api/register",{
+      method:"POST",
+      body:JSON.stringify({
+        name:name,
+        email:email,
+        password:password,
+        role:"seller"
+      })
+    });
+
+    localStorage.token = r.token;
+    token = r.token;
+
+    modal.style.display = "none";
+
+    alert("Compte vendeur créé avec succès !");
+  }catch(e){
+    alert(e.message);
+  }
   }
 async function api(p,o={}){
   o.headers={
