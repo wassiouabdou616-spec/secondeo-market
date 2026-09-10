@@ -4,9 +4,23 @@ const jwt=require("jsonwebtoken");
 const bcrypt=require("bcryptjs");
 const {Pool}=require("pg");
 const Stripe=require("stripe");
+const fs=require("fs");
 require("dotenv").config?.();
 const app=express();
 const pool=new Pool({connectionString:process.env.DATABASE_URL});
+
+async function initDatabase(){
+  try{
+    const schemaPath=path.join(__dirname,"schema.sql");
+    const schema=fs.readFileSync(schemaPath,"utf8");
+    await pool.query(schema);
+    console.log("Base de données initialisée avec succès.");
+  }catch(e){
+    console.error("ERREUR INITIALISATION DB :",e);
+    throw e;
+  }
+}
+
 const stripe=process.env.STRIPE_SECRET_KEY?new Stripe(process.env.STRIPE_SECRET_KEY):null;
 app.use(express.json({limit:"2mb"}));
 app.use(express.static(__dirname));
@@ -67,4 +81,20 @@ app.get("/api/notifications",auth,async(req,res)=>{let r=await pool.query("SELEC
 app.get("/api/admin/stats",auth,admin,async(req,res)=>{let [u,p,o,r]=await Promise.all([pool.query("SELECT count(*) n FROM users"),pool.query("SELECT count(*) n FROM products"),pool.query("SELECT count(*) n FROM orders"),pool.query("SELECT COALESCE(sum(total_cents),0) n FROM orders WHERE payment_status='paid'")]);res.json({users:+u.rows[0].n,products:+p.rows[0].n,orders:+o.rows[0].n,revenue_cents:+r.rows[0].n})});
 app.patch("/api/admin/orders/:id",auth,admin,async(req,res)=>{let r=await pool.query("UPDATE orders SET shipping_status=COALESCE($1,shipping_status),status=COALESCE($2,status) WHERE id=$3 RETURNING *",[req.body.shippingStatus,req.body.status,req.params.id]);res.json(r.rows[0])});
 app.patch("/api/admin/products/:id",auth,admin,async(req,res)=>{let r=await pool.query("UPDATE products SET status=$1 WHERE id=$2 RETURNING *",[req.body.status,req.params.id]);res.json(r.rows[0])});
-app.listen(process.env.PORT||3000,()=>console.log("Secondeo Market V7 prêt"));
+async function start(){
+  try{
+    await initDatabase();
+
+    const port=process.env.PORT||3000;
+
+    app.listen(port,"0.0.0.0",()=>{
+      console.log(`Secondeo Market V8 prêt sur le port ${port}`);
+    });
+
+  }catch(e){
+    console.error("Le serveur ne peut pas démarrer :",e);
+    process.exit(1);
+  }
+}
+
+start();
