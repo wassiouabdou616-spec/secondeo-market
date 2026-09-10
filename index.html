@@ -3,26 +3,7 @@ body{margin:0;font-family:Arial,sans-serif;background:#f4f7f5;color:#17231d}head
 <header><div class="brand">🛍️ Secondeo Market <small style='opacity:.7'>V8</small></div><nav><button class="btn" onclick="home()">Accueil</button><button class="btn" onclick="cart()">🛒 Panier</button><button class="btn" onclick="orders()">📦 Commandes</button><button class="btn" onclick="favorites()">❤️ Favoris</button><button class="btn" onclick="messages()">💬 Messages</button><button class="btn" onclick="showAuth(event)">👤 Compte</button></nav></header><main class="wrap" id="app"></main>
 <div class="modal" id="modal"><div class="box" id="box"></div></div>
 <script>
-let token=localStorage.token||"",app=document.querySelector("#app"),modal=document.querySelector("#modal"),box=document.querySelector("#box");function auth(){
-  box.innerHTML=`
-    <h2>👤 Mon compte</h2>
-
-    <input id="authName" placeholder="Nom complet">
-    <input id="authEmail" type="email" placeholder="Adresse email">
-    <input id="authPassword" type="password" placeholder="Mot de passe">
-
-    <select id="authRole">
-      <option value="buyer">Acheteur</option>
-      <option value="seller">Vendeur</option>
-    </select>
-
-    <button class="btn" onclick="registerAccount()">Créer mon compte</button>
-    <button class="btn" onclick="loginAccount()">Se connecter</button>
-    <button class="btn" onclick="modal.style.display='none'">Fermer</button>
-  `;
-
-  modal.style.display="flex";
-}
+let token=localStorage.token||"",app=document.querySelector("#app"),modal=document.querySelector("#modal"),box=document.querySelector("#box");
 
 async function registerAccount(){
   try{
