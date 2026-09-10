@@ -138,6 +138,40 @@ async function loginAccount(){
   }catch(e){
     alert(e.message);
   }
+  }function showAuth(e){
+  if(e) e.preventDefault();
+
+  box.innerHTML = `
+    <h2>Connexion</h2>
+
+    <input id="email" type="email" placeholder="Email">
+
+    <input id="pass" type="password" placeholder="Mot de passe">
+
+    <button class="btn primary" onclick="loginAccount()">
+      Se connecter
+    </button>
+
+    <hr>
+
+    <h3>Créer un compte vendeur</h3>
+
+    <input id="nm" placeholder="Nom">
+
+    <input id="em" type="email" placeholder="Email">
+
+    <input id="pw" type="password" placeholder="Mot de passe">
+
+    <button class="btn secondary" onclick="registerAccount()">
+      Créer le compte
+    </button>
+
+    <button class="btn" onclick="modal.style.display='none'">
+      Fermer
+    </button>
+  `;
+
+  modal.style.display = "flex";
   }
 async function api(p,o={}){
   o.headers={
