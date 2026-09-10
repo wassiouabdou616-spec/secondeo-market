@@ -31,11 +31,7 @@ app.post("/api/register",async(req,res)=>{try{let{name,email,password,role="buye
 app.post("/api/login",async(req,res)=>{let r=await pool.query("SELECT * FROM users WHERE email=$1",[String(req.body.email||"").toLowerCase()]);let u=r.rows[0];if(!u||!(await bcrypt.compare(req.body.password||"",u.password_hash)))return res.status(401).json({error:"Identifiants incorrects"});res.json({token:sign(u),user:{id:u.id,name:u.name,email:u.email,role:u.role}})});
 app.get("/api/products", async (req, res) => {
   try {
-    let q = String(req.query.q || "").trim();
-    let cat = String(req.query.category || "").trim();
-    let min = Number(req.query.min || 0);
-    let max = Number(req.query.max || 99999999);
-
+    let q=String(req.query.q||"").trim(),cat=String(req.query.category||"").trim(),min=Number(req.query.min||0),max=Number(req.query.max||20000000);
     let r = await pool.query(
       `SELECT p.*, u.name AS seller
        FROM products p
