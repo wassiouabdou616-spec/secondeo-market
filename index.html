@@ -191,6 +191,34 @@ async function api(p,o={}){
   return d;
       }
 function auth(){open(`<h2>Connexion</h2><input id="email" placeholder="Email"><input id="pass" type="password" placeholder="Mot de passe"><button class="btn primary" onclick="login()">Se connecter</button><hr><h3>Créer un compte vendeur</h3><input id="nm" placeholder="Nom"><input id="em" placeholder="Email"><input id="pw" type="password" placeholder="Mot de passe"><button class="btn secondary" onclick="register()">Créer le compte</button>`)}
+async function loginAccount(){
+  try{
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("pass").value;
+
+    if(!email || !password){
+      alert("Veuillez saisir votre email et votre mot de passe.");
+      return;
+    }
+
+    const r = await api("/api/login",{
+      method:"POST",
+      body:JSON.stringify({
+        email:email,
+        password:password
+      })
+    });
+
+    localStorage.token = r.token;
+    token = r.token;
+
+    modal.style.display = "none";
+
+    alert("Connexion réussie !");
+  }catch(e){
+    alert(e.message);
+  }
+}
 async function login(){try{let d=await api("/api/login",{method:"POST",body:JSON.stringify({email:email.value,password:pass.value})});token=d.token;localStorage.token=token;close();home()}catch(e){alert(e.message)}}
 async function register(){try{let d=await api("/api/register",{method:"POST",body:JSON.stringify({name:nm.value,email:em.value,password:pw.value,role:"seller"})});token=d.token;localStorage.token=token;close();seller()}catch(e){alert(e.message)}}async function home(){
   app.innerHTML = "<h2>Chargement...</h2>";
